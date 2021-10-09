@@ -1,0 +1,25 @@
+{
+  "name": "primality-test",
+  "version": "1.0.0",
+  "description": "An implementation of the Miller-Rabin primality test to determine with high probability whether some arbitrarily-large number is prime.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --reporter spec tests/*"
+  },
+  "keywords": [
+    "prime",
+    "primality",
+    "composite",
+    "Miller-Rabin"
+  ],
+  "author": "Laton Vermette (https://latonv.com)",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^9.0.2"
+  },
+  "dependencies": {
+    "bn.js": "^5.2.0"
+  }
+}
