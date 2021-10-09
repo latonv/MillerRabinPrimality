@@ -59,6 +59,11 @@ function testPrimality(n, numRounds=2) {
 
       const r = nSub.zeroBits();                      // Multiplicity of prime factor 2 in the prime factorization of n-1
       const d = nSub.div(new BN("2").pow(new BN(r))); // The result of factoring out all powers of 2 from n-1
+      
+      // Convert into a Montgomery reduction context for faster modular exponentiation
+      const reductionContext = BN.mont(n);
+      const oneReduced = new BN(1).toRed(reductionContext); // The number 1 in the reduction context
+      const nSubReduced = nSub.toRed(reductionContext);     // The number n-1 in the reduction context
 
       let probablePrime = true;
       let witness = null;
@@ -71,18 +76,19 @@ function testPrimality(n, numRounds=2) {
           base = new BN(getRandomBitString(nBits), 2);
         } while (!base.gtn(2) || !base.lt(nSub)); // The base must lie within [2, n-2]
 
-        let x = base.pow(d).mod(n);
-        if (x.eqn(1) || x.eq(nSub)) continue; // The test passed: base^d = +/-1 (mod n)
+        const baseReduced = base.toRed(reductionContext);
+        const x = baseReduced.redPow(d);
+        if (x.eq(oneReduced) || x.eq(nSubReduced)) continue; // The test passed: base^d = +/-1 (mod n)
 
         // Perform the actual Miller-Rabin loop
         let i;
         for (i = 0; i < r; i++) {
-          x = x.sqr().mod(n);
-          if (x.eqn(1)) {
+          x.redISqr();
+          if (x.eq(oneReduced)) {
             probablePrime = false;  // The test failed: base^(d*2^j) = 1 (mod n) and thus cannot be -1 for any j
             witness = base;         // So this base is a witness to the guaranteed compositeness of n
             break outer;
-          } else if (x.eq(nSub)) {
+          } else if (x.eq(nSubReduced)) {
             // The test passed: base^(d*2^j) = -1 (mod n) for the current j
             // So n is a strong probable prime to this base (though n may still be composite)
             break;

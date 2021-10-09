@@ -22,7 +22,7 @@ describe("small cases", () => {
 });
 
 describe("large cases", () => {
-  it.skip("should correctly mark large primes as probable primes", async () => {
+  it("should correctly mark large primes as probable primes", async () => {
     const largePrimes = [
       "482398747",
       "120371948791827323",
@@ -33,7 +33,7 @@ describe("large cases", () => {
     }
   });
 
-  it.skip("should correctly mark large composite numbers as composite", async () => {
+  it("should correctly mark large composite numbers as composite", async () => {
     const largeComposites = [
       "565122993",
       "6282987234087503937",
