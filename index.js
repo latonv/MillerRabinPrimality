@@ -1,6 +1,13 @@
 const BN = require("bn.js");
 
 /**
+ * @typedef MillerRabinResultOptions
+ * @property {BN} n The primality-tested number to which the result applies
+ * @property {boolean} probablePrime Whether `n` is a probable prime
+ * @property {BN?} witness An optional witness to the compositeness of `n`, if one exists
+ * @property {BN?} divisor An optional divisor of `n`, if one exists and was found during testing
+ */
+/**
  * A record class to hold the results of Miller-Rabin testing.
  */
 class MillerRabinResult {
@@ -8,10 +15,11 @@ class MillerRabinResult {
    * Constructs a result object from the given options
    * @param {MillerRabinResultOptions} options
    */
-  constructor({n, probablePrime, witness=null} = {}) {
+  constructor({ n, probablePrime, witness=null, divisor=null } = {}) {
     this.n = n;
     this.probablePrime = probablePrime;
     this.witness = witness;
+    this.divisor = divisor;
   }
 }
 
@@ -35,22 +43,28 @@ function getRandomBitString(numBits) {
  * 
  * @param {number|BN} n A non-negative odd integer to be tested for primality.
  * @param {number} numRounds A positive integer specifying the number of bases to test against.
+ * @param {boolean?} findDivisor Whether to calculate and return a divisor of `n` in certain cases where this is possible (not guaranteed).
+ *   Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
  * @returns {Promise<MillerRabinResult>} An object containing properties
  *   `n` (the input value, as a BigNumber),
  *   `probablePrime` (true if all the primality tests passed, false otherwise),
- *   `witness` (a BigNumber witness for the compositeness of `n`, or null if none was found)
+ *   `witness` (a BigNumber witness for the compositeness of `n`, or null if none was found),
+ *   `divisor` (a BigNumber divisor of `n`, or null if no such divisor was found)
  */
-function testPrimality(n, numRounds=2) {
+function testPrimality(n, numRounds=2, findDivisor=true) {
   return new Promise((resolve, reject) => {
     try {
       n = new BN(n);
 
       // Handle some small special cases
       if (n.ltn(2)) { // n = 0 or 1
-        resolve(new MillerRabinResult({ n, probablePrime: false, witness: null }));
+        resolve(new MillerRabinResult({ n, probablePrime: false, witness: null, divisor: null }));
         return;
       } else if (n.ltn(4)) { // n = 2 or 3
-        resolve(new MillerRabinResult({ n, probablePrime: true, witness: null }));
+        resolve(new MillerRabinResult({ n, probablePrime: true, witness: null, divisor: null }));
+        return;
+      } else if (n.eqn(4)) { // n = 4
+        resolve(new MillerRabinResult({ n, probablePrime: false, witness: null, divisor: new BN("2") }));
         return;
       }
 
@@ -67,6 +81,7 @@ function testPrimality(n, numRounds=2) {
 
       let probablePrime = true;
       let witness = null;
+      let divisor = null;
 
       outer:
       for (let round = 0; round < numRounds; round++) {
@@ -75,6 +90,17 @@ function testPrimality(n, numRounds=2) {
         do {
           base = new BN(getRandomBitString(nBits), 2);
         } while (!base.gtn(2) || !base.lt(nSub)); // The base must lie within [2, n-2]
+
+        // Check whether the chosen base has any factors in common with n (if so, we can end early)
+        if (findDivisor) {
+          const gcd = n.gcd(base);
+          if (!gcd.eqn(1)) {
+            probablePrime = false;
+            witness = base;
+            divisor = gcd;
+            break; // Found a factor of n, so no need for further primality tests
+          }
+        }
 
         const baseReduced = base.toRed(reductionContext);
         const x = baseReduced.redPow(d);
@@ -87,6 +113,10 @@ function testPrimality(n, numRounds=2) {
           if (x.eq(oneReduced)) {
             probablePrime = false;  // The test failed: base^(d*2^j) = 1 (mod n) and thus cannot be -1 for any j
             witness = base;         // So this base is a witness to the guaranteed compositeness of n
+            if (findDivisor) {
+              divisor = x.fromRed().subn(1).gcd(n);
+              if (divisor.eqn(1)) divisor = null;
+            }
             break outer;
           } else if (x.eq(nSubReduced)) {
             // The test passed: base^(d*2^j) = -1 (mod n) for the current j
@@ -98,11 +128,16 @@ function testPrimality(n, numRounds=2) {
         if (i === r) {
           probablePrime = false;
           witness = base;
+          if (findDivisor) {
+            x.redISqr();
+            divisor = x.fromRed().subn(1).gcd(n);
+            if (divisor.eqn(1)) divisor = null;
+          }
           break;
         }
       }
 
-      resolve(new MillerRabinResult({ n, probablePrime, witness }));
+      resolve(new MillerRabinResult({ n, probablePrime, witness, divisor }));
 
     } catch (err) {
       reject(err);
