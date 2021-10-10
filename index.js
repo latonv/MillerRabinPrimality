@@ -1,4 +1,5 @@
 const BN = require("bn.js");
+const TWO = new BN("2");
 
 /**
  * @typedef MillerRabinResultOptions
@@ -42,7 +43,7 @@ function getRandomBitString(numBits) {
  * Runs Miller-Rabin primality tests on `n` using `rounds` different bases, to determine with high probability whether `n` is a prime number.
  * 
  * @param {number|BN} n A non-negative odd integer to be tested for primality.
- * @param {number} numRounds A positive integer specifying the number of bases to test against.
+ * @param {number?} numRounds A positive integer specifying the number of bases to test against.
  * @param {boolean?} findDivisor Whether to calculate and return a divisor of `n` in certain cases where this is possible (not guaranteed).
  *   Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
  * @returns {Promise<MillerRabinResult>} An object containing properties
@@ -64,15 +65,15 @@ function testPrimality(n, numRounds=2, findDivisor=true) {
         resolve(new MillerRabinResult({ n, probablePrime: true, witness: null, divisor: null }));
         return;
       } else if (n.eqn(4)) { // n = 4
-        resolve(new MillerRabinResult({ n, probablePrime: false, witness: null, divisor: new BN("2") }));
+        resolve(new MillerRabinResult({ n, probablePrime: false, witness: null, divisor: TWO.clone() }));
         return;
       }
 
       const nBits = n.bitLength();
       const nSub = n.subn(1);
 
-      const r = nSub.zeroBits();                      // Multiplicity of prime factor 2 in the prime factorization of n-1
-      const d = nSub.div(new BN("2").pow(new BN(r))); // The result of factoring out all powers of 2 from n-1
+      const r = nSub.zeroBits();              // Multiplicity of prime factor 2 in the prime factorization of n-1
+      const d = nSub.div(TWO.pow(new BN(r))); // The result of factoring out all powers of 2 from n-1
       
       // Convert into a Montgomery reduction context for faster modular exponentiation
       const reductionContext = BN.mont(n);
