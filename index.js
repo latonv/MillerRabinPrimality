@@ -1,4 +1,5 @@
 const BN = require("bn.js");
+const ONE = new BN("1");
 const TWO = new BN("2");
 
 /**
@@ -42,8 +43,12 @@ function getRandomBitString(numBits) {
 /**
  * Runs Miller-Rabin primality tests on `n` using `rounds` different bases, to determine with high probability whether `n` is a prime number.
  * 
+ * Note that Miller-Rabin tests are not guaranteed to produce correct results for even `n`, so a quick trial division to remove factors of 2
+ * is advised before turning to this algorithm.
+ * 
  * @param {number|BN} n A non-negative odd integer to be tested for primality.
  * @param {number?} numRounds A positive integer specifying the number of bases to test against.
+ *   If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.
  * @param {boolean?} findDivisor Whether to calculate and return a divisor of `n` in certain cases where this is possible (not guaranteed).
  *   Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
  * @returns {Promise<MillerRabinResult>} An object containing properties
@@ -52,7 +57,7 @@ function getRandomBitString(numBits) {
  *   `witness` (a BigNumber witness for the compositeness of `n`, or null if none was found),
  *   `divisor` (a BigNumber divisor of `n`, or null if no such divisor was found)
  */
-function testPrimality(n, numRounds=2, findDivisor=true) {
+function testPrimality(n, numRounds, findDivisor=true) {
   return new Promise((resolve, reject) => {
     try {
       n = new BN(n);
@@ -64,7 +69,7 @@ function testPrimality(n, numRounds=2, findDivisor=true) {
       } else if (n.ltn(4)) { // n = 2 or 3
         resolve(new MillerRabinResult({ n, probablePrime: true, witness: null, divisor: null }));
         return;
-      } else if (n.eqn(4)) { // n = 4
+      } else if (n.isEven()) { // Quick short-circuit for other even n
         resolve(new MillerRabinResult({ n, probablePrime: false, witness: null, divisor: TWO.clone() }));
         return;
       }
@@ -77,8 +82,18 @@ function testPrimality(n, numRounds=2, findDivisor=true) {
       
       // Convert into a Montgomery reduction context for faster modular exponentiation
       const reductionContext = BN.mont(n);
-      const oneReduced = new BN(1).toRed(reductionContext); // The number 1 in the reduction context
-      const nSubReduced = nSub.toRed(reductionContext);     // The number n-1 in the reduction context
+      const oneReduced = ONE.toRed(reductionContext);   // The number 1 in the reduction context
+      const nSubReduced = nSub.toRed(reductionContext); // The number n-1 in the reduction context
+
+      // If the number of testing rounds was not provided, pick a reasonable one based on the size of n
+      // Larger n have a vanishingly small chance to be falsely labelled probable primes, so we can balance speed and accuracy accordingly
+      if (!numRounds) {
+        if (nBits > 1000) numRounds = 2;
+        else if (nBits > 500) numRounds = 3;
+        else if (nBits > 250) numRounds = 4;
+        else if (nBits > 150) numRounds = 5;
+        else numRounds = 6;
+      }
 
       let probablePrime = true;
       let witness = null;
