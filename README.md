@@ -30,6 +30,7 @@ primalityTest(3847201213).then((result) => {
 });
 
 // Can provide either numbers or bn.js BigNums as input
+const BN = require("bn.js");
 primalityTest(new BN("23817247230482304972350984848923821")).then(/* ... */);
 
 // Can specify how many rounds of testing to perform before marking the input as a probable prime.
