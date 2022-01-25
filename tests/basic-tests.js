@@ -7,16 +7,16 @@ const { testPrimality } = require("../index.js");
 
 describe("small cases", () => {
   it("should correctly mark small odd primes as probable primes", async () => {
-    const smallOddPrimes = [3, 5, 7, 11, 13, 17, 19, 23, 29];
+    const smallOddPrimes = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31];
     for (const p of smallOddPrimes) {
       await testPrimality(p).should.eventually.be.an("object").and.have.property("probablePrime", true);
     }
   });
 
   it("should correctly mark small odd composite numbers as composite", async () => {
-    const smallOddComposites = [9, 15, 21, 25, 27];
+    const smallOddComposites = [9, 15, 21, 25, 27, 33, 35];
     for (const n of smallOddComposites) {
-      await testPrimality(n).should.eventually.have.property("probablePrime", false);
+      await testPrimality(n).should.eventually.be.an("object").and.have.property("probablePrime", false);
     }
   });
 });
