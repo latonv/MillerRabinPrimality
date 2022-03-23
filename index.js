@@ -41,23 +41,48 @@ function getRandomBitString(numBits) {
 }
 
 /**
+ * Determines an appropriate number of Miller-Rabin testing rounds to perform based on the size of the
+ * input number being tested. Larger numbers generally require fewer rounds to maintain a given level
+ * of accuracy.
+ * 
+ * @param {number} inputBits The number of bits in the input number.
+ * @returns {number} How many rounds of testing to perform.
+ */
+function getAdaptiveNumRounds(inputBits) {
+  if (inputBits > 1000) return 2;
+  else if (inputBits > 500) return 3;
+  else if (inputBits > 250) return 4;
+  else if (inputBits > 150) return 5;
+  else return 6;
+}
+
+/**
+ * @typedef MillerRabinOptions
+ * @property {number?} numRounds A positive integer specifying the number of bases to test against.
+ *   If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.
+ * @property {boolean?} findDivisor Whether to calculate and return a divisor of `n` in certain cases where this is possible (not guaranteed).
+ *   Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
+ */
+/**
  * Runs Miller-Rabin primality tests on `n` using `rounds` different bases, to determine with high probability whether `n` is a prime number.
  * 
  * Note that Miller-Rabin tests are not guaranteed to produce correct results for even `n`, so a quick trial division to remove factors of 2
- * is advised before turning to this algorithm.
+ * is advised before turning to this algorithm. To avoid erroneous results, even input will simply short-circuit to a result with `divisor`
+ * equal to 2, with no tests being performed.
  * 
  * @param {number|BN} n A non-negative odd integer to be tested for primality.
- * @param {number?} numRounds A positive integer specifying the number of bases to test against.
- *   If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.
- * @param {boolean?} findDivisor Whether to calculate and return a divisor of `n` in certain cases where this is possible (not guaranteed).
- *   Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
- * @returns {Promise<MillerRabinResult>} An object containing properties
- *   `n` (the input value, as a BigNumber),
- *   `probablePrime` (true if all the primality tests passed, false otherwise),
- *   `witness` (a BigNumber witness for the compositeness of `n`, or null if none was found),
- *   `divisor` (a BigNumber divisor of `n`, or null if no such divisor was found)
+ * @param {MillerRabinOptions?} options An object specifying the `numRounds` and/or `findDivisor` options.
+ *   - `numRounds` is a positive integer specifying the number of bases to test against.
+ *    If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.
+ *   - `findDivisor` is a boolean specifying whether to calculate and return a divisor of `n` in certain cases where this is
+ *    easily possible (not guaranteed). Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
+ * @returns {Promise<MillerRabinResult>} A result object containing properties
+ *   - `n` (the input value, as a BigNumber),
+ *   - `probablePrime` (true if all the primality tests passed, false otherwise),
+ *   - `witness` (a BigNumber witness for the compositeness of `n`, or null if none was found),
+ *   - `divisor` (a BigNumber divisor of `n`, or null if no such divisor was found)
  */
-function testPrimality(n, numRounds, findDivisor=true) {
+function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
   return new Promise((resolve, reject) => {
     try {
       n = new BN(n);
@@ -87,12 +112,8 @@ function testPrimality(n, numRounds, findDivisor=true) {
 
       // If the number of testing rounds was not provided, pick a reasonable one based on the size of n
       // Larger n have a vanishingly small chance to be falsely labelled probable primes, so we can balance speed and accuracy accordingly
-      if (!numRounds) {
-        if (nBits > 1000) numRounds = 2;
-        else if (nBits > 500) numRounds = 3;
-        else if (nBits > 250) numRounds = 4;
-        else if (nBits > 150) numRounds = 5;
-        else numRounds = 6;
+      if (numRounds == null || numRounds < 1) {
+        numRounds = getAdaptiveNumRounds(nBits);
       }
 
       let probablePrime = true;
