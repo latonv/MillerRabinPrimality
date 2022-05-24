@@ -5,7 +5,7 @@
 Since Miller-Rabin is a probabilistic test, there is a small chance that it could label a composite number as a probable prime (if all tested bases are strong liars).
 This chance decreases exponentially as the number of testing rounds is increased, and is already quite small for very large inputs regardless.
 
-Actual primes are always correctly labeled as such by this algorithm.
+A prime number will never be labeled composite by this algorithm (always a probable prime).
 
 [bn.js](https://www.npmjs.com/package/bn.js) is used for arbitrary-size BigNumber inputs and outputs.
 
@@ -50,7 +50,7 @@ primalityTest(1234567, { numRounds: 5 }).then(/* ... */);
 
 By default, an attempt will be made to find a divisor for composite input via some relatively inexpensive checks (not a full factoring attempt!).
 If a divisor is not needed, it is possible to opt out of these checks by setting the `findDivisor` option to `false`.
-Note that even with `findDivisor=true`, a divisor is not always guaranteed to be found, even for composite n.
+Note that even with `findDivisor=true`, a divisor is not always guaranteed to be found, even for composite `n`.
 ```js
 primalityTest(1234567, { findDivisor: false }).then(/* ... */);
 ```
