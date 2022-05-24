@@ -70,7 +70,7 @@ function getAdaptiveNumRounds(inputBits) {
  * is advised before turning to this algorithm. To avoid erroneous results, even input will simply short-circuit to a result with `divisor`
  * equal to 2, with no tests being performed.
  * 
- * @param {number|BN} n A non-negative odd integer to be tested for primality.
+ * @param {number|string|BN} n A non-negative odd integer (or string representation thereof) to be tested for primality.
  * @param {MillerRabinOptions?} options An object specifying the `numRounds` and/or `findDivisor` options.
  *   - `numRounds` is a positive integer specifying the number of bases to test against.
  *    If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.

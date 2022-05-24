@@ -35,10 +35,11 @@ primalityTest(3847201213).then((result) => {
 });
 ```
 
-The input can be provided either as a primitive number or as a bn.js BigNum.
+The input can be provided as a primitive number, a string, or as a bn.js BigNum.
 ```js
-const BN = require("bn.js");
-primalityTest(new BN("23817247230482304972350984848923821")).then(/* ... */);
+const BigNum = require("bn.js");
+primalityTest("2718281828459045235360287471").then(/* ... */);
+primalityTest(new BigNum("2718281828459045235360287471")).then(/* ... */);
 ```
 
 The option is available to specify how many rounds of testing to perform before marking the input as a probable prime.
