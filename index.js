@@ -1,4 +1,5 @@
 const BN = require("bn.js");
+const mont = require("./montgomery.js");
 const ONE = new BN("1");
 const TWO = new BN("2");
 
@@ -85,30 +86,30 @@ function getAdaptiveNumRounds(inputBits) {
 function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
   return new Promise((resolve, reject) => {
     try {
-      n = new BN(n);
+      n = BigInt(n); //new BN(n);
 
       // Handle some small special cases
-      if (n.ltn(2)) { // n = 0 or 1
+      if (n < 2n /*n.ltn(2)*/) { // n = 0 or 1
         resolve(new MillerRabinResult({ n, probablePrime: false, witness: null, divisor: null }));
         return;
-      } else if (n.ltn(4)) { // n = 2 or 3
+      } else if (n < 4n /*n.ltn(4)*/) { // n = 2 or 3
         resolve(new MillerRabinResult({ n, probablePrime: true, witness: null, divisor: null }));
         return;
-      } else if (n.isEven()) { // Quick short-circuit for other even n
-        resolve(new MillerRabinResult({ n, probablePrime: false, witness: null, divisor: TWO.clone() }));
+      } else if (!(n & 1n) /*n.isEven()*/) { // Quick short-circuit for other even n
+        resolve(new MillerRabinResult({ n, probablePrime: false, witness: null, divisor: 2n /*TWO.clone()*/ }));
         return;
       }
 
-      const nBits = n.bitLength();
-      const nSub = n.subn(1);
+      const nBits = mont.bitLength(n); //n.bitLength();
+      const nSub = n - 1n; //n.subn(1);
 
-      const r = nSub.zeroBits();              // Multiplicity of prime factor 2 in the prime factorization of n-1
-      const d = nSub.div(TWO.pow(new BN(r))); // The result of factoring out all powers of 2 from n-1
+      const r = mont.twoMultiplicity(nSub, nBits); //nSub.zeroBits();              // Multiplicity of prime factor 2 in the prime factorization of n-1
+      const d = nSub >> r; //nSub.div(TWO.pow(new BN(r))); // The result of factoring out all powers of 2 from n-1
       
       // Convert into a Montgomery reduction context for faster modular exponentiation
-      const reductionContext = BN.mont(n);
-      const oneReduced = ONE.toRed(reductionContext);   // The number 1 in the reduction context
-      const nSubReduced = nSub.toRed(reductionContext); // The number n-1 in the reduction context
+      const reductionContext = mont.mont(n); //BN.mont(n);
+      const oneReduced = mont.reduce(1n, reductionContext); //ONE.toRed(reductionContext);   // The number 1 in the reduction context
+      const nSubReduced = mont.reduce(nSub, reductionContext); //nSub.toRed(reductionContext); // The number n-1 in the reduction context
 
       // If the number of testing rounds was not provided, pick a reasonable one based on the size of n
       // Larger n have a vanishingly small chance to be falsely labelled probable primes, so we can balance speed and accuracy accordingly
@@ -125,13 +126,13 @@ function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
         // Select a random base to test
         let base;
         do {
-          base = new BN(getRandomBitString(nBits), 2);
-        } while (!base.gtn(2) || !base.lt(nSub)); // The base must lie within [2, n-2]
+          base = BigInt("0b" + getRandomBitString(nBits)); //new BN(getRandomBitString(nBits), 2);
+        } while (!(base > 2n) || !(base < nSub) /*!base.gtn(2) || !base.lt(nSub)*/); // The base must lie within [2, n-2]
 
         // Check whether the chosen base has any factors in common with n (if so, we can end early)
         if (findDivisor) {
-          const gcd = n.gcd(base);
-          if (!gcd.eqn(1)) {
+          const gcd = mont.gcd(n, base); //n.gcd(base);
+          if (gcd !== 1n /*!gcd.eqn(1)*/) {
             probablePrime = false;
             witness = base;
             divisor = gcd;
@@ -139,23 +140,23 @@ function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
           }
         }
 
-        const baseReduced = base.toRed(reductionContext);
-        const x = baseReduced.redPow(d);
-        if (x.eq(oneReduced) || x.eq(nSubReduced)) continue; // The test passed: base^d = +/-1 (mod n)
+        const baseReduced = mont.reduce(base, reductionContext); //base.toRed(reductionContext);
+        let x = mont.pow(baseReduced, d, reductionContext); //baseReduced.redPow(d);
+        if (x === oneReduced || x === nSubReduced /*x.eq(oneReduced) || x.eq(nSubReduced)*/) continue; // The test passed: base^d = +/-1 (mod n)
 
         // Perform the actual Miller-Rabin loop
         let i;
-        for (i = 0; i < r; i++) {
-          x.redISqr();
-          if (x.eq(oneReduced)) {
+        for (i = 0n; i < r; i++) {
+          x = mont.sqr(x, reductionContext); //x.redISqr();
+          if (x === oneReduced /*x.eq(oneReduced)*/) {
             probablePrime = false;  // The test failed: base^(d*2^j) = 1 (mod n) and thus cannot be -1 for any j
             witness = base;         // So this base is a witness to the guaranteed compositeness of n
             if (findDivisor) {
-              divisor = x.fromRed().subn(1).gcd(n);
-              if (divisor.eqn(1)) divisor = null;
+              divisor = mont.gcd(mont.invReduce(x, reductionContext) - 1n, n); //x.fromRed().subn(1).gcd(n);
+              if (divisor === 1n /*divisor.eqn(1)*/) divisor = null;
             }
             break outer;
-          } else if (x.eq(nSubReduced)) {
+          } else if (x === nSubReduced /*x.eq(nSubReduced)*/) {
             // The test passed: base^(d*2^j) = -1 (mod n) for the current j
             // So n is a strong probable prime to this base (though n may still be composite)
             break;
@@ -166,9 +167,9 @@ function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
           probablePrime = false;
           witness = base;
           if (findDivisor) {
-            x.redISqr();
-            divisor = x.fromRed().subn(1).gcd(n);
-            if (divisor.eqn(1)) divisor = null;
+            x = mont.sqr(x, reductionContext); //x.redISqr();
+            divisor = mont.gcd(mont.invReduce(x, reductionContext) - 1n, n); //x.fromRed().subn(1).gcd(n);
+            if (divisor === 1n /*divisor.eqn(1)*/) divisor = null;
           }
           break;
         }
