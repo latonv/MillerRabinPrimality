@@ -1,4 +1,5 @@
 const mont = require("./montgomery.js");
+
 const ZERO = 0n;
 const ONE = 1n;
 const TWO = 2n;

@@ -119,7 +119,7 @@ function reductionContextFor(base) {
 
   // Calculate the modular inverses of r (mod base) and base (mod r)
   const rInv = invert(littleShift, base);
-  const baseInv = r - (((rInv * r - ONE) / base) % r); // From baseInv*base + r*rInv = 1  (mod r)
+  const baseInv = r - (((rInv * r - ONE) / base) % r); // From base*baseInv + r*rInv = 1  (mod r)
 
   return { base, shift, r, rInv, baseInv };
 }
@@ -128,7 +128,7 @@ function reductionContextFor(base) {
  * Convert the given number into its Montgomery form, according to the given Montgomery reduction context.
  * 
  * @param {bigint} n Any number
- * @param {*} ctx 
+ * @param {MontgomeryReductionContext} ctx 
  * @returns {bigint} The Montgomery form of `n`
  */
 function reduce(n, ctx) {
@@ -139,7 +139,7 @@ function reduce(n, ctx) {
  * Converts the given number _out_ of Montgomery form, according to the given Montgomery reduction context.
  * 
  * @param {bigint} n A number in Montgomery form
- * @param {*} ctx 
+ * @param {MontgomeryReductionContext} ctx 
  * @returns {bigint} The (no longer Montgomery-reduced) number whose Montgomery form was `n`
  */
 function invReduce(n, ctx) {
@@ -150,7 +150,7 @@ function invReduce(n, ctx) {
  * Squares a number in Montgomery form.
  * 
  * @param {bigint} n A number in Montgomery form
- * @param {*} ctx 
+ * @param {MontgomeryReductionContext} ctx 
  * @returns {bigint} The Montgomery-reduced square of `n`
  */
 function sqr(n, ctx) {
@@ -162,7 +162,7 @@ function sqr(n, ctx) {
  * 
  * @param {bigint} a A number in Montgomery form
  * @param {bigint} b A number in Montgomery form
- * @param {*} ctx 
+ * @param {MontgomeryReductionContext} ctx 
  * @returns {bigint} The Montgomery-reduced product of `a` and `b`
  */
 function mul(a, b, ctx) {
@@ -186,9 +186,9 @@ function mul(a, b, ctx) {
  * Calculates `n` to the power of `exp` in Montgomery form.
  * While `n` must be in Montgomery form, `exp` should not.
  * 
- * @param {bigint} n A number in Montgomery form
+ * @param {bigint} n A number in Montgomery form; the base of the exponentiation
  * @param {bigint} exp Any number (_not_ in Montgomery form)
- * @param {*} ctx 
+ * @param {MontgomeryReductionContext} ctx 
  * @returns {bigint} The Montgomery-reduced result of taking `n` to exponent `exp`
  */
 function pow(n, exp, ctx) {

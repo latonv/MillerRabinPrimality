@@ -7,7 +7,7 @@ This chance decreases exponentially as the number of testing rounds is increased
 
 A prime number will never be labeled composite by this algorithm (always a probable prime).
 
-[bn.js](https://www.npmjs.com/package/bn.js) is used for arbitrary-size BigNumber inputs and outputs.
+Primitive BigInt values are used for arbitrary-size inputs and outputs. Accordingly, this library requires a Node.js or browser version that supports primitive BigInts.
 
 ## Usage
 
@@ -17,17 +17,17 @@ const { primalityTest } = require("primality-test");
 primalityTest(91).then((result) => {
   // result should resemble:
   // {
-  //   n: BigNum(91),
+  //   n: BigInt(91),
   //   probablePrime: false,
-  //   witness: BigNum(23),
-  //   divisor: BigNum(7)
+  //   witness: BigInt(23),
+  //   divisor: BigInt(7)
   // }
 });
 
 primalityTest(3847201213).then((result) => {
   // result should resemble:
   // {
-  //   n: BigNum(3847201213),
+  //   n: BigInt(3847201213),
   //   probablePrime: true,
   //   witness: null,
   //   divisor: null
@@ -35,14 +35,15 @@ primalityTest(3847201213).then((result) => {
 });
 ```
 
-The input can be provided as a primitive number, a string, or as a bn.js BigNum.
+The input can be provided as a primitive number (as above), a primitive BigInt, or a string:
 ```js
-const BigNum = require("bn.js");
+// All of these are equivalent
 primalityTest("2718281828459045235360287471").then(/* ... */);
-primalityTest(new BigNum("2718281828459045235360287471")).then(/* ... */);
+primalityTest(2718281828459045235360287471n).then(/* ... */);
+primalityTest(BigInt("2718281828459045235360287471")).then(/* ... */);
 ```
 
-The option is available to specify how many rounds of testing to perform before marking the input as a probable prime.
+An option is available to specify how many rounds of testing to perform before marking the input as a probable prime.
 More rounds of testing will result in a greater likelihood of finding a witness for composite numbers.
 If the `numRounds` option is not specified, a reasonable number of rounds will be chosen based on the size of the input.
 ```js
