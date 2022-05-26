@@ -262,6 +262,29 @@ function getAdaptiveNumRounds(inputBits) {
   else return 6;
 }
 
+function validateBases(bases, nSub) {
+  if (bases == null) {
+    return null;
+  } else if (Array.isArray(bases)) {
+    // Ensure all bases are valid BigInts within [2, n-2]
+    bases = bases.map(b => {
+      if (typeof b !== "bigint") {
+        b = BigInt(b);
+      }
+
+      if (!(b >= TWO) || !(b < nSub)) {
+        throw new RangeError(`invalid base (must be in the range [2, n-2]): ${b}`);
+      }
+
+      return b;
+    });
+
+    return bases;
+  } else {
+    throw new TypeError(`invalid bases option (must be an array)`);
+  }
+}
+
 /**
  * @typedef MillerRabinOptions
  * @property {number?} numRounds A positive integer specifying the number of bases to test against.
@@ -285,7 +308,7 @@ function getAdaptiveNumRounds(inputBits) {
  *   - `witness` (a BigInt witness for the compositeness of `n`, or null if none was found),
  *   - `divisor` (a BigInt divisor of `n`, or null if no such divisor was found)
  */
-function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
+function testPrimality(n, { numRounds=undefined, bases=undefined, findDivisor=true } = {}) {
   return new Promise((resolve, reject) => {
     try {
       if (typeof n !== "bigint") {
@@ -316,23 +339,36 @@ function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
       const oneReduced = montgomeryReduce(ONE, reductionContext); // The number 1 in the reduction context
       const nSubReduced = montgomeryReduce(nSub, reductionContext); // The number n-1 in the reduction context
 
+      bases = validateBases(bases, nSub);
+      console.log(bases);
+
       // If the number of testing rounds was not provided, pick a reasonable one based on the size of n
       // Larger n have a vanishingly small chance to be falsely labelled probable primes, so we can balance speed and accuracy accordingly
-      if (numRounds == null || numRounds < 1) {
+      if (bases != null) {
+        numRounds = bases.length;
+      } else if (numRounds == null || numRounds < 1) {
         numRounds = getAdaptiveNumRounds(nBits);
       }
 
       let probablePrime = true;
       let witness = null;
       let divisor = null;
+      let baseIndex = 0;
 
       outer:
       for (let round = 0; round < numRounds; round++) {
-        // Select a random base to test
         let base;
-        do {
-          base = BigInt("0b" + getRandomBitString(nBits));
-        } while (!(base > TWO) || !(base < nSub)); // The base must lie within [2, n-2]
+        if (bases != null) {
+          base = bases[baseIndex];
+          baseIndex++;
+        } else {
+          // Select a random base to test
+          do {
+            base = BigInt("0b" + getRandomBitString(nBits));
+          } while (!(base >= TWO) || !(base < nSub)); // The base must lie within [2, n-2]
+        }
+
+        console.log(`Base ${base}`);
 
         // Check whether the chosen base has any factors in common with n (if so, we can end early)
         if (findDivisor) {
