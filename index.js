@@ -262,6 +262,19 @@ function getAdaptiveNumRounds(inputBits) {
   else return 6;
 }
 
+/**
+ * Ensures that all bases in the given array are valid for use in Miller-Rabin tests on the number `n = nSub + 1`.
+ * A base is valid if it is an integer in the range [2, n-2].
+ * 
+ * If `bases` is null, it is ignored and null is returned.
+ * If `bases` is an array of valid bases, they will be returned as a new array, all coerced to BigInts.
+ * Otherwise, a RangeError will be thrown if any of the bases are outside the valid range, or a TypeError will
+ * be thrown if `bases` is neither an array nor null.
+ * 
+ * @param {(number|string|bigint)[]?} bases The array of bases to validate
+ * @param {bigint} nSub One less than the number being primality tested
+ * @returns {bigint[] | null} An array of BigInts provided all bases were valid, or null if the input was null
+ */
 function validateBases(bases, nSub) {
   if (bases == null) {
     return null;
@@ -287,19 +300,29 @@ function validateBases(bases, nSub) {
 
 /**
  * @typedef MillerRabinOptions
- * @property {number?} numRounds A positive integer specifying the number of bases to test against.
+ * @property {number?} numRounds A positive integer specifying the number of random bases to test against.
  *   If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.
+ * @property {(number|string|bigint)[]?} bases An array of integers (or string representations thereof) to use as the
+ *   bases for Miller-Rabin testing. If this option is specified, the `numRounds` option will be ignored, 
+ *   and the maximum number of testing rounds will equal `bases.length` (one round for each given base).
+ * 
+ *   Every base provided must lie within the range [2, n-2] (inclusive) or a RangeError will be thrown.
+ *   If `bases` is specified but is not an array, a TypeError will be thrown.
  * @property {boolean?} findDivisor Whether to calculate and return a divisor of `n` in certain cases where this is possible (not guaranteed).
  *   Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
  */
 
 /**
- * Runs Miller-Rabin primality tests on `n` using `rounds` different bases, to determine with high probability whether `n` is a prime number.
+ * Runs Miller-Rabin primality tests on `n` using randomly-chosen bases, to determine with high probability whether `n` is a prime number.
  * 
  * @param {number|string|bigint} n A non-negative integer (or string representation thereof) to be tested for primality.
  * @param {MillerRabinOptions?} options An object specifying the `numRounds` and/or `findDivisor` options.
- *   - `numRounds` is a positive integer specifying the number of bases to test against.
+ *   - `numRounds` is a positive integer specifying the number of random bases to test against.
  *    If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.
+ *   - `bases` is an array of integers (or string representations thereof) to use as the bases for Miller-Rabin testing. If this option
+ *    is specified, the `numRounds` option will be ignored, and the maximum number of testing rounds will equal `bases.length` (one round
+ *    for ach given base). Every base provided must lie within the range [2, n-2] (inclusive) or a RangeError will be thrown.
+ *    If `bases` is specified but is not an array, a TypeError will be thrown.
  *   - `findDivisor` is a boolean specifying whether to calculate and return a divisor of `n` in certain cases where this is
  *    easily possible (not guaranteed). Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
  * @returns {Promise<PrimalityResult>} A result object containing properties
@@ -340,7 +363,6 @@ function testPrimality(n, { numRounds=undefined, bases=undefined, findDivisor=tr
       const nSubReduced = montgomeryReduce(nSub, reductionContext); // The number n-1 in the reduction context
 
       bases = validateBases(bases, nSub);
-      console.log(bases);
 
       // If the number of testing rounds was not provided, pick a reasonable one based on the size of n
       // Larger n have a vanishingly small chance to be falsely labelled probable primes, so we can balance speed and accuracy accordingly
@@ -367,8 +389,6 @@ function testPrimality(n, { numRounds=undefined, bases=undefined, findDivisor=tr
             base = BigInt("0b" + getRandomBitString(nBits));
           } while (!(base >= TWO) || !(base < nSub)); // The base must lie within [2, n-2]
         }
-
-        console.log(`Base ${base}`);
 
         // Check whether the chosen base has any factors in common with n (if so, we can end early)
         if (findDivisor) {
