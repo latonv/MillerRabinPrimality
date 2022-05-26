@@ -7,7 +7,14 @@ This chance decreases exponentially as the number of testing rounds is increased
 
 A prime number will never be labeled composite by this algorithm (always a probable prime).
 
-Primitive BigInt values are used for arbitrary-size inputs and outputs. Accordingly, this library requires a Node.js or browser version that supports primitive BigInts.
+Primitive BigInt values are used for arbitrary-size inputs and outputs. Accordingly, this library requires a Node.js or browser version that supports primitive BigInts:
+
+ - Node.js v10.4.0+
+ - Firefox v68+
+ - Chrome v67+
+ - Edge v79+
+ - Safari v14+
+ - Opera v54+
 
 ## Usage
 
@@ -35,7 +42,7 @@ primalityTest(3847201213).then((result) => {
 });
 ```
 
-The input can be provided as a primitive number (as above), a primitive BigInt, or a string:
+The input can be provided as a primitive number (like above), a primitive BigInt, or a string:
 ```js
 // All of these are equivalent
 primalityTest("2718281828459045235360287471").then(/* ... */);
