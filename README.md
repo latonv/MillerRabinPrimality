@@ -1,6 +1,6 @@
 # Miller-Rabin Primality Test
 
-> A lightweight module for primality testing arbitrarily large numbers via the Miller-Rabin algorithm.
+> A lightweight module for efficiently primality testing arbitrarily large numbers via the Miller-Rabin algorithm.
 
 Since Miller-Rabin is a probabilistic test, there is a small chance that it could label a composite number as a probable prime (if all tested bases are strong liars).
 This chance decreases exponentially as the number of testing rounds is increased, and is already quite small for very large inputs regardless.
@@ -50,6 +50,10 @@ primalityTest(2718281828459045235360287471n).then(/* ... */);
 primalityTest(BigInt("2718281828459045235360287471")).then(/* ... */);
 ```
 
+### Options
+
+#### `numRounds`
+
 An option is available to specify how many rounds of testing to perform before marking the input as a probable prime.
 More rounds of testing will result in a greater likelihood of finding a witness for composite numbers.
 If the `numRounds` option is not specified, a reasonable number of rounds will be chosen based on the size of the input.
@@ -57,9 +61,24 @@ If the `numRounds` option is not specified, a reasonable number of rounds will b
 primalityTest(1234567, { numRounds: 5 }).then(/* ... */);
 ```
 
-By default, an attempt will be made to find a divisor for composite input via some relatively inexpensive checks (not a full factoring attempt!).
+#### `bases`
+
+Alternatively, an array of specific bases to test against can be provided. This `bases` option will override any
+`numRounds` value specified, and use exactly the provided bases (i.e., the maximum number of testing rounds will equal `bases.length`).
+This option can be useful for attaining 
+[deterministic results](https://en.wikipedia.org/wiki/Miller%E2%80%93Rabin_primality_test#Testing_against_small_sets_of_bases) 
+for a given range of inputs.
+All of the provided bases must lie within the range `[2, n-2]` (inclusive), or a RangeError will be thrown.
+```js
+primalityTest(3215031749n, { bases: [2, 3, 5, 7] }).then(/* ... */);
+```
+
+#### `findDivisor`
+
+By default, if the input is determined to be composite, an attempt will be made to find a divisor via some relatively 
+inexpensive checks (not a full factoring attempt!).
 If a divisor is not needed, it is possible to opt out of these checks by setting the `findDivisor` option to `false`.
-Note that even with `findDivisor=true`, a divisor is not always guaranteed to be found, even for composite `n`.
+Note that even with `findDivisor=true` and composite input, a divisor is not always guaranteed to be found.
 ```js
 primalityTest(1234567, { findDivisor: false }).then(/* ... */);
 ```
