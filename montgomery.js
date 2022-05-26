@@ -1,3 +1,6 @@
+const ZERO = 0n;
+const ONE = 1n;
+
 
 /**
  * Calculates the length of `n` in bits.
@@ -18,11 +21,11 @@ function bitLength(n) {
  * @returns {bigint} The multiplicity of 2 in the prime factorization of `n`
  */
 function twoMultiplicity(n) {
-  if (n === 0n) return 0n;
+  if (n === ZERO) return ZERO;
 
-  let m = 0n;
+  let m = ZERO;
   while (true) { // Since n is not 0, it must have a leading 1 bit, so this is safe
-    if (n & (1n << m)) return m; // Bail out when we reach the least significant 1 bit
+    if (n & (ONE << m)) return m; // Bail out when we reach the least significant 1 bit
     m++;
   }
 }
@@ -36,21 +39,21 @@ function twoMultiplicity(n) {
  */
 function gcd(a, b) {
   if (a === b) return a;
-  if (a === 0n) return b;
-  if (b === 0n) return a;
+  if (a === ZERO) return b;
+  if (b === ZERO) return a;
   
   // Strip out any shared factors of two beforehand (to be re-added at the end)
-  let sharedTwoFactors = 0n;
-  while (!(a & 1n | b & 1n)) {
+  let sharedTwoFactors = ZERO;
+  while (!(a & ONE | b & ONE)) {
     sharedTwoFactors++;
-    a >>= 1n;
-    b >>= 1n;
+    a >>= ONE;
+    b >>= ONE;
   }
   
-  while (a !== b && b > 1n) {
+  while (a !== b && b > ONE) {
     // Any remaining factors of two in either number are not important and can be shifted away
-    while (!(a & 1n)) a >>= 1n;
-    while (!(b & 1n)) b >>= 1n;
+    while (!(a & ONE)) a >>= ONE;
+    while (!(b & ONE)) b >>= ONE;
 
     // Standard Euclidean algorithm, maintaining a > b and avoiding division
     if (b > a) {
@@ -75,13 +78,13 @@ function gcd(a, b) {
 function invert(exp, base) {
   // Penk's rshift inversion method, but restricted to powers of 2 and odd bases (which is all we require for Miller-Rabin)
   // Just start from 1 and repeatedly halve, adding the base whenever necessary to remain even.
-  let inv = 1n;
+  let inv = ONE;
   for (let i = 0; i < exp; i++) {
-    if (inv & 1n) {
+    if (inv & ONE) {
       inv += base;
     }
 
-    inv >>= 1n;
+    inv >>= ONE;
   }
   return inv;
 }
@@ -106,17 +109,17 @@ function invert(exp, base) {
  * @returns {MontgomeryReductionContext}
  */
 function reductionContextFor(base) {
-  if (!(base & 1n)) throw new Error(`base must be odd`);
+  if (!(base & ONE)) throw new Error(`base must be odd`);
 
   // Select the auxiliary modulus r to be the smallest power of two greater than the base modulus
   const numBits = bitLength(base);
   const littleShift = numBits + 1;
   const shift = BigInt(littleShift);
-  const r = 1n << shift;
+  const r = ONE << shift;
 
   // Calculate the modular inverses of r (mod base) and base (mod r)
   const rInv = invert(littleShift, base);
-  const baseInv = r - (((rInv * r - 1n) / base) % r); // From baseInv*base + r*rInv = 1  (mod r)
+  const baseInv = r - (((rInv * r - ONE) / base) % r); // From baseInv*base + r*rInv = 1  (mod r)
 
   return { base, shift, r, rInv, baseInv };
 }
@@ -163,16 +166,16 @@ function sqr(n, ctx) {
  * @returns {bigint} The Montgomery-reduced product of `a` and `b`
  */
 function mul(a, b, ctx) {
-  if (a === 0n || b === 0n) return 0n;
+  if (a === ZERO || b === ZERO) return ZERO;
 
-  const rm1 = ctx.r - 1n;
+  const rm1 = ctx.r - ONE;
   let t = a * b;
   const c = (((t & rm1) * ctx.baseInv) & rm1) * ctx.base;
   let product = (t - c) >> ctx.shift;
 
   if (product >= ctx.base) {
     product -= ctx.base;
-  } else if (product < 0) {
+  } else if (product < ZERO) {
     product += ctx.base;
   }
   
@@ -191,9 +194,9 @@ function mul(a, b, ctx) {
 function pow(n, exp, ctx) {
   // Exponentiation by squaring
   const expLen = BigInt(bitLength(exp));
-  let result = reduce(1n, ctx);
-  for (let i = 0n, x = n; i < expLen; ++i, x = sqr(x, ctx)) {
-    if (exp & (1n << i)) {
+  let result = reduce(ONE, ctx);
+  for (let i = ZERO, x = n; i < expLen; ++i, x = sqr(x, ctx)) {
+    if (exp & (ONE << i)) {
       result = mul(result, x, ctx);
     }
   }
