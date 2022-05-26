@@ -116,7 +116,7 @@ function reductionContextFor(base) {
 
   // Select the auxiliary modulus r to be the smallest power of two greater than the base modulus
   const numBits = bitLength(base);
-  const littleShift = numBits + 1;
+  const littleShift = numBits;
   const shift = BigInt(littleShift);
   const r = ONE << shift;
 
@@ -208,7 +208,7 @@ function montgomeryPow(n, exp, ctx) {
 }
 
 /**
- * @typedef MillerRabinResultOptions
+ * @typedef PrimalityResultOptions
  * @property {bigint} n The primality-tested number to which the result applies
  * @property {boolean} probablePrime Whether `n` is a probable prime
  * @property {bigint?} witness An optional witness to the compositeness of `n`, if one exists
@@ -216,12 +216,12 @@ function montgomeryPow(n, exp, ctx) {
  */
 
 /**
- * A record class to hold the results of Miller-Rabin testing.
+ * A record class to hold the results of primality testing.
  */
-class MillerRabinResult {
+class PrimalityResult {
   /**
    * Constructs a result object from the given options
-   * @param {MillerRabinResultOptions} options
+   * @param {PrimalityResultOptions} options
    */
   constructor({ n, probablePrime, witness=null, divisor=null } = {}) {
     this.n = n;
@@ -279,7 +279,7 @@ function getAdaptiveNumRounds(inputBits) {
  *    If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.
  *   - `findDivisor` is a boolean specifying whether to calculate and return a divisor of `n` in certain cases where this is
  *    easily possible (not guaranteed). Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
- * @returns {Promise<MillerRabinResult>} A result object containing properties
+ * @returns {Promise<PrimalityResult>} A result object containing properties
  *   - `n` (the input value, as a BigInt),
  *   - `probablePrime` (true if all the primality tests passed, false otherwise),
  *   - `witness` (a BigInt witness for the compositeness of `n`, or null if none was found),
@@ -294,19 +294,20 @@ function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
 
       // Handle some small special cases
       if (n < TWO) { // n = 0 or 1
-        resolve(new MillerRabinResult({ n, probablePrime: false, witness: null, divisor: null }));
+        resolve(new PrimalityResult({ n, probablePrime: false, witness: null, divisor: null }));
         return;
       } else if (n < FOUR) { // n = 2 or 3
-        resolve(new MillerRabinResult({ n, probablePrime: true, witness: null, divisor: null }));
+        resolve(new PrimalityResult({ n, probablePrime: true, witness: null, divisor: null }));
         return;
       } else if (!(n & ONE)) { // Quick short-circuit for other even n
-        resolve(new MillerRabinResult({ n, probablePrime: false, witness: null, divisor: TWO }));
+        resolve(new PrimalityResult({ n, probablePrime: false, witness: null, divisor: TWO }));
         return;
       }
 
       const nBits = bitLength(n);
       const nSub = n - ONE;
 
+      // Represent n-1 as d * 2^r, with d odd
       const r = twoMultiplicity(nSub, nBits); // Multiplicity of prime factor 2 in the prime factorization of n-1
       const d = nSub >> r; // The result of factoring out all powers of 2 from n-1
       
@@ -347,12 +348,12 @@ function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
         const baseReduced = montgomeryReduce(base, reductionContext);
         let x = montgomeryPow(baseReduced, d, reductionContext);
         if (x === oneReduced || x === nSubReduced) continue; // The test passed: base^d = +/-1 (mod n)
-
+        
         // Perform the actual Miller-Rabin loop
-        let i;
+        let i, y;
         for (i = ZERO; i < r; i++) {
-          x = montgomerySqr(x, reductionContext);
-          if (x === oneReduced) {
+          y = montgomerySqr(x, reductionContext);
+          if (y === oneReduced) {
             probablePrime = false;  // The test failed: base^(d*2^j) = 1 (mod n) and thus cannot be -1 for any j
             witness = base;         // So this base is a witness to the guaranteed compositeness of n
             if (findDivisor) {
@@ -360,18 +361,18 @@ function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
               if (divisor === ONE) divisor = null;
             }
             break outer;
-          } else if (x === nSubReduced) {
+          } else if (y === nSubReduced) {
             // The test passed: base^(d*2^j) = -1 (mod n) for the current j
             // So n is a strong probable prime to this base (though n may still be composite)
             break;
           }
+          x = y;
         }
 
         if (i === r) {
           probablePrime = false;
           witness = base;
           if (findDivisor) {
-            x = montgomerySqr(x, reductionContext);
             divisor = ugcd(invMontgomeryReduce(x, reductionContext) - ONE, n);
             if (divisor === ONE) divisor = null;
           }
@@ -379,7 +380,7 @@ function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
         }
       }
 
-      resolve(new MillerRabinResult({ n, probablePrime, witness, divisor }));
+      resolve(new PrimalityResult({ n, probablePrime, witness, divisor }));
 
     } catch (err) {
       reject(err);

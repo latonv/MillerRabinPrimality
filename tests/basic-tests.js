@@ -60,3 +60,30 @@ describe("different input types", () => {
     await testPrimality(8327983n).should.eventually.be.an("object").and.have.property("probablePrime", true);
   });
 });
+
+describe("check for valid divisors", () => {
+  it("should always return p as a divisor when the input is p^2", async () => {
+    const primes = [
+      101n,
+      1203981240941n,
+      7382749857293847288803n
+    ];
+    for (const p of primes) {
+      const result = await testPrimality(p ** 2n, { findDivisor: true }); // Future-proofing by specifying the default option
+      result.should.be.an("object");
+      result.should.have.property("probablePrime", false);
+      result.should.have.property("divisor", p);
+    }
+  });
+
+  it("should always return either no divisor at all or a valid non-trivial divisor of the input", async () => {
+    const composites = [14911n, 239875n, 41612447n];
+    for (const n of composites) {
+      const result = await testPrimality(n, { findDivisor: true }); // Future-proofing by specifying the default option
+      result.should.be.an("object");
+      result.should.have.property("probablePrime", false);
+      result.should.have.property("divisor").not.oneOf([1n, n]); // Divisor should not be 1 or equal to the input
+      result.should.satisfy(result => (result.divisor === null) || (n % result.divisor === 0n)); // It's either null or it divides n
+    }
+  });
+});
