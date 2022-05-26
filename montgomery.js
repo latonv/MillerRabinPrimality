@@ -1,5 +1,5 @@
 const ZERO = 0n;
-const ONE = 1n;
+const ONE  = 1n;
 
 
 /**
