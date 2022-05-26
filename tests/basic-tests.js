@@ -5,8 +5,12 @@ chai.use(chaiAsPromised).should();
 const { testPrimality } = require("../index.js");
 
 describe("small cases", () => {
-  it("should correctly label small odd primes as probable primes", async () => {
-    const smallOddPrimes = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31];
+  it("should not label 0 or 1 as probable primes", async () => {
+    await Promise.all([0n, 1n].map(n => testPrimality(n).should.eventually.be.an("object").and.have.property("probablePrime", false)));
+  });
+
+  it("should correctly label small primes as probable primes", async () => {
+    const smallOddPrimes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31];
     for (const p of smallOddPrimes) {
       await testPrimality(p).should.eventually.be.an("object").and.have.property("probablePrime", true);
     }
@@ -44,6 +48,15 @@ describe("large cases", () => {
   });
 });
 
+describe("even cases", () => {
+  it("should correctly label even numbers greater than 2 as composite", async () => {
+    const evens = [4n, 623872n, 3020209137492837423487530n];
+    for (const n of evens) {
+      await testPrimality(n).should.eventually.be.an("object").and.have.property("probablePrime", false);
+    }
+  });
+});
+
 describe("different input types", () => {
   it("should correctly label inputs specified as a primitive number", async () => {
     await testPrimality(8327981).should.eventually.be.an("object").and.have.property("probablePrime", false);
@@ -62,7 +75,7 @@ describe("different input types", () => {
 });
 
 describe("check for valid divisors", () => {
-  it("should always return p as a divisor when the input is p^2", async () => {
+  it("should always return prime p as a divisor when the input is p^2", async () => {
     const primes = [
       101n,
       1203981240941n,
@@ -80,8 +93,7 @@ describe("check for valid divisors", () => {
     const composites = [14911n, 239875n, 41612447n];
     for (const n of composites) {
       const result = await testPrimality(n, { findDivisor: true }); // Future-proofing by specifying the default option
-      result.should.be.an("object");
-      result.should.have.property("probablePrime", false);
+      result.should.be.an("object").and.have.property("probablePrime", false);
       result.should.have.property("divisor").not.oneOf([1n, n]); // Divisor should not be 1 or equal to the input
       result.should.satisfy(result => (result.divisor === null) || (n % result.divisor === 0n)); // It's either null or it divides n
     }
