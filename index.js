@@ -107,7 +107,7 @@ function testPrimality(n, { numRounds=undefined, findDivisor=true } = {}) {
       const d = nSub >> r; //nSub.div(TWO.pow(new BN(r))); // The result of factoring out all powers of 2 from n-1
       
       // Convert into a Montgomery reduction context for faster modular exponentiation
-      const reductionContext = mont.mont(n); //BN.mont(n);
+      const reductionContext = mont.reductionContextFor(n); //BN.mont(n);
       const oneReduced = mont.reduce(1n, reductionContext); //ONE.toRed(reductionContext);   // The number 1 in the reduction context
       const nSubReduced = mont.reduce(nSub, reductionContext); //nSub.toRed(reductionContext); // The number n-1 in the reduction context
 
