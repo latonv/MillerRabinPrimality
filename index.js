@@ -9,7 +9,7 @@ const FOUR = 4n;
  * @param {bigint} n Any number
  * @returns {number} The number of bits required to encode `n`
  */
- function bitLength(n) {
+function bitLength(n) {
   // Surprisingly, string conversion seems to be the most performant way to get the bit length of a BigInt at present...
   return n.toString(2).length;
 }
@@ -331,7 +331,7 @@ function validateBases(bases, nSub) {
  *   - `witness` (a BigInt witness for the compositeness of `n`, or null if none was found),
  *   - `divisor` (a BigInt divisor of `n`, or null if no such divisor was found)
  */
-function testPrimality(n, { numRounds=undefined, bases=undefined, findDivisor=true } = {}) {
+function primalityTest(n, { numRounds=undefined, bases=undefined, findDivisor=true } = {}) {
   return new Promise((resolve, reject) => {
     try {
       if (typeof n !== "bigint") {
@@ -444,4 +444,4 @@ function testPrimality(n, { numRounds=undefined, bases=undefined, findDivisor=tr
   });
 }
 
-module.exports = { testPrimality };
+module.exports = { primalityTest };
