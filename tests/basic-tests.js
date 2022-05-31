@@ -48,6 +48,16 @@ describe("large cases", () => {
   });
 });
 
+describe("huge case", () => {
+  it("should correctly label huge numbers (on the scale of 2^600)", async () => {
+    const hugePrime = 4149515568880992958512407863691161151012446232242436899995657329690652811412908146399707048947103794288197886611300789182395151075411775307886874834113963687061181803401509523685281n;
+    await primalityTest(hugePrime).should.eventually.be.an("object").and.have.property("probablePrime", true);
+
+    const hugeComposite = 4295112606385589202670737964171552770346216275479013633328838288627166945146694397150573962945247787070239917720469237925637086200864820055532028337065330833975609235099808104498899n;
+    await primalityTest(hugeComposite).should.eventually.be.an("object").and.have.property("probablePrime", false);
+  });
+});
+
 describe("even cases", () => {
   it("should correctly label even numbers greater than 2 as composite", async () => {
     const evens = [4n, 623872n, 3020209137492837423487530n];
