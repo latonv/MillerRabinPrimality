@@ -1,3 +1,4 @@
+// Some useful BigInt constants
 const ZERO = 0n;
 const ONE  = 1n;
 const TWO  = 2n;
@@ -52,7 +53,7 @@ function ugcd(a, b) {
   }
   
   while (a !== b && b > ONE) {
-    // Any remaining factors of two in either number are not important and can be shifted away
+    // Any remaining factors of two in either number are not important to the gcd and can be shifted away
     while (!(a & ONE)) a >>= ONE;
     while (!(b & ONE)) b >>= ONE;
 
