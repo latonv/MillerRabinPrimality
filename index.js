@@ -209,30 +209,6 @@ function montgomeryPow(n, exp, ctx) {
 }
 
 /**
- * @typedef PrimalityResultOptions
- * @property {bigint} n The primality-tested number to which the result applies
- * @property {boolean} probablePrime Whether `n` is a probable prime
- * @property {bigint?} witness An optional witness to the compositeness of `n`, if one exists
- * @property {bigint?} divisor An optional divisor of `n`, if one exists and was found during testing
- */
-
-/**
- * A record class to hold the results of primality testing.
- */
-class PrimalityResult {
-  /**
-   * Constructs a result object from the given options
-   * @param {PrimalityResultOptions} options
-   */
-  constructor({ n, probablePrime, witness=null, divisor=null } = {}) {
-    this.n = n;
-    this.probablePrime = probablePrime;
-    this.witness = witness;
-    this.divisor = divisor;
-  }
-}
-
-/**
  * Produces a string of random bits with the specified length.
  * Mainly useful as input to BigInt constructors that take digit strings of arbitrary length.
  * 
@@ -313,6 +289,32 @@ function validateBases(bases, nSub) {
  *   Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
  */
 
+
+
+/**
+ * @typedef PrimalityResultOptions
+ * @property {bigint} n The primality-tested number to which the result applies
+ * @property {boolean} probablePrime Whether `n` is a probable prime
+ * @property {bigint?} witness An optional witness to the compositeness of `n`, if one exists
+ * @property {bigint?} divisor An optional divisor of `n`, if one exists and was found during testing
+ */
+
+/**
+ * A record class to hold the results of primality testing.
+ */
+class PrimalityResult {
+  /**
+   * Constructs a result object from the given options
+   * @param {PrimalityResultOptions} options
+   */
+  constructor({ n, probablePrime, witness=null, divisor=null } = {}) {
+    this.n = n;
+    this.probablePrime = probablePrime;
+    this.witness = witness;
+    this.divisor = divisor;
+  }
+}
+
 /**
  * Runs Miller-Rabin primality tests on `n` using randomly-chosen bases, to determine with high probability whether `n` is a prime number.
  * 
@@ -322,7 +324,7 @@ function validateBases(bases, nSub) {
  *    If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.
  *   - `bases` is an array of integers (or string representations thereof) to use as the bases for Miller-Rabin testing. If this option
  *    is specified, the `numRounds` option will be ignored, and the maximum number of testing rounds will equal `bases.length` (one round
- *    for ach given base). Every base provided must lie within the range [2, n-2] (inclusive) or a RangeError will be thrown.
+ *    for each given base). Every base provided must lie within the range [2, n-2] (inclusive) or a RangeError will be thrown.
  *    If `bases` is specified but is not an array, a TypeError will be thrown.
  *   - `findDivisor` is a boolean specifying whether to calculate and return a divisor of `n` in certain cases where this is
  *    easily possible (not guaranteed). Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
@@ -363,25 +365,26 @@ function primalityTest(n, { numRounds=undefined, bases=undefined, findDivisor=tr
       const oneReduced = montgomeryReduce(ONE, reductionContext); // The number 1 in the reduction context
       const nSubReduced = montgomeryReduce(nSub, reductionContext); // The number n-1 in the reduction context
 
+      // Either use the user-provided list of bases to test against, or determine how many random bases to test
       bases = validateBases(bases, nSub);
-
-      // If the number of testing rounds was not provided, pick a reasonable one based on the size of n
-      // Larger n have a vanishingly small chance to be falsely labelled probable primes, so we can balance speed and accuracy accordingly
       if (bases != null) {
         numRounds = bases.length;
       } else if (numRounds == null || numRounds < 1) {
+        // If the number of testing rounds was not provided, pick a reasonable one based on the size of n
+        // Larger n have a vanishingly small chance to be falsely labelled probable primes, so we can balance speed and accuracy accordingly
         numRounds = getAdaptiveNumRounds(nBits);
       }
 
       let probablePrime = true;
       let witness = null;
       let divisor = null;
-      let baseIndex = 0;
+      let baseIndex = 0; // Only relevant if the user specified a list of bases to use
 
       outer:
       for (let round = 0; round < numRounds; round++) {
         let base;
         if (bases != null) {
+          // Use the next user-specified base
           base = bases[baseIndex];
           baseIndex++;
         } else {
@@ -410,8 +413,9 @@ function primalityTest(n, { numRounds=undefined, bases=undefined, findDivisor=tr
         let i, y;
         for (i = ZERO; i < r; i++) {
           y = montgomerySqr(x, reductionContext);
+          
           if (y === oneReduced) {
-            probablePrime = false;  // The test failed: base^(d*2^j) = 1 (mod n) and thus cannot be -1 for any j
+            probablePrime = false;  // The test failed: base^(d*2^i) = 1 (mod n) and thus cannot be -1 for any i
             witness = base;         // So this base is a witness to the guaranteed compositeness of n
             if (findDivisor) {
               divisor = ugcd(invMontgomeryReduce(x, reductionContext) - ONE, n);
@@ -419,10 +423,11 @@ function primalityTest(n, { numRounds=undefined, bases=undefined, findDivisor=tr
             }
             break outer;
           } else if (y === nSubReduced) {
-            // The test passed: base^(d*2^j) = -1 (mod n) for the current j
+            // The test passed: base^(d*2^i) = -1 (mod n) for the current i
             // So n is a strong probable prime to this base (though n may still be composite)
             break;
           }
+
           x = y;
         }
 
