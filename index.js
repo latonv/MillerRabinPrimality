@@ -14,7 +14,7 @@
 
   /**
    * Calculates the multiplicity of 2 in the prime factorization of `n` -- i.e., how many factors of 2 `n` contains.
-   * So if `n = 2^k * d` (where `d` is odd), the returned value would be `k`.
+   * So if `n = 2^k * d` and `d` is odd, the returned value would be `k`.
    * 
    * @param {bigint} n Any number
    * @returns {bigint} The multiplicity of 2 in the prime factorization of `n`
@@ -32,7 +32,7 @@
   /**
    * Calculates the length of `n` in bits.
    * 
-   * @param {bigint} n Any number
+   * @param {bigint} n Any positive integer
    * @returns {number} The number of bits required to encode `n`
    */
   function bitLength(n) {
@@ -43,8 +43,8 @@
   /**
    * Calculates the gcd of two positive bigints.
    * 
-   * @param {bigint} a The first number, which must be positive
-   * @param {bigint} b The second number, which must be positive
+   * @param {bigint} a The first number (must be positive)
+   * @param {bigint} b The second number (must be positive)
    * @returns {bigint} gcd(a, b)
    */
   function ugcd(a, b) {
@@ -140,7 +140,7 @@
    * Convert the given number into its Montgomery form, according to the given Montgomery reduction context.
    * 
    * @param {bigint} n Any number
-   * @param {MontgomeryReductionContext} ctx 
+   * @param {MontgomeryReductionContext} ctx The Montgomery reduction context to reduce into
    * @returns {bigint} The Montgomery form of `n`
    */
   function montgomeryReduce(n, ctx) {
@@ -151,7 +151,7 @@
    * Converts the given number _out_ of Montgomery form, according to the given Montgomery reduction context.
    * 
    * @param {bigint} n A number in Montgomery form
-   * @param {MontgomeryReductionContext} ctx 
+   * @param {MontgomeryReductionContext} ctx The Montgomery reduction context to reduce out of
    * @returns {bigint} The (no longer Montgomery-reduced) number whose Montgomery form was `n`
    */
   function invMontgomeryReduce(n, ctx) {
@@ -162,7 +162,7 @@
    * Squares a number in Montgomery form.
    * 
    * @param {bigint} n A number in Montgomery form
-   * @param {MontgomeryReductionContext} ctx 
+   * @param {MontgomeryReductionContext} ctx The Montgomery reduction context to square within
    * @returns {bigint} The Montgomery-reduced square of `n`
    */
   function montgomerySqr(n, ctx) {
@@ -174,7 +174,7 @@
    * 
    * @param {bigint} a A number in Montgomery form
    * @param {bigint} b A number in Montgomery form
-   * @param {MontgomeryReductionContext} ctx 
+   * @param {MontgomeryReductionContext} ctx The Montgomery reduction context to multiply within
    * @returns {bigint} The Montgomery-reduced product of `a` and `b`
    */
   function montgomeryMul(a, b, ctx) {
@@ -200,7 +200,7 @@
    * 
    * @param {bigint} n A number in Montgomery form; the base of the exponentiation
    * @param {bigint} exp Any number (_not_ in Montgomery form)
-   * @param {MontgomeryReductionContext} ctx 
+   * @param {MontgomeryReductionContext} ctx The Montgomery reduction context to exponentiate within
    * @returns {bigint} The Montgomery-reduced result of taking `n` to exponent `exp`
    */
   function montgomeryPow(n, exp, ctx) {
@@ -330,7 +330,7 @@
    * @param {MillerRabinOptions?} options An object specifying the `numRounds` and/or `findDivisor` options.
    *   - `numRounds` is a positive integer specifying the number of random bases to test against.
    *    If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.
-   *   - `bases` is an array of integers (or string representations thereof) to use as the bases for Miller-Rabin testing. If this option
+   *   - `bases` is an array of integers to use as the bases for Miller-Rabin testing. If this option
    *    is specified, the `numRounds` option will be ignored, and the maximum number of testing rounds will equal `bases.length` (one round
    *    for each given base). Every base provided must lie within the range [2, n-2] (inclusive) or a RangeError will be thrown.
    *    If `bases` is specified but is not an array, a TypeError will be thrown.
