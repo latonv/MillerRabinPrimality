@@ -4,7 +4,8 @@
     "noImplicitAny": true,
     "module": "es6",
     "target": "es2020",
-    "allowJs": false,
+    "allowJs": true,
+    "checkJs": true,
     "moduleResolution": "node"
   }
 }
