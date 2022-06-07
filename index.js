@@ -11,6 +11,7 @@
   const ONE  = 1n;
   const TWO  = 2n;
   const FOUR = 4n;
+  const NEG_ONE = -1n;
 
   /**
    * Calculates the multiplicity of 2 in the prime factorization of `n` -- i.e., how many factors of 2 `n` contains.
@@ -182,6 +183,7 @@
 
     const rm1 = ctx.r - ONE;
     let unredProduct = a * b;
+
     const t = (((unredProduct & rm1) * ctx.baseInv) & rm1) * ctx.base;
     let product = (unredProduct - t) >> ctx.shift;
 
@@ -283,6 +285,7 @@
     }
   }
 
+
   /**
    * @typedef MillerRabinOptions
    * @property {number?} numRounds A positive integer specifying the number of random bases to test against.
@@ -296,7 +299,6 @@
    * @property {boolean?} findDivisor Whether to calculate and return a divisor of `n` in certain cases where this is possible (not guaranteed).
    *   Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
    */
-
 
 
   /**
@@ -326,7 +328,7 @@
   /**
    * Runs Miller-Rabin primality tests on `n` using randomly-chosen bases, to determine with high probability whether `n` is a prime number.
    * 
-   * @param {number|string|bigint} n A non-negative integer (or string representation thereof) to be tested for primality.
+   * @param {number|string|bigint} n An integer (or string representation thereof) to be tested for primality.
    * @param {MillerRabinOptions?} options An object specifying the `numRounds` and/or `findDivisor` options.
    *   - `numRounds` is a positive integer specifying the number of random bases to test against.
    *    If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.
@@ -349,15 +351,21 @@
           n = BigInt(n);
         }
 
+        // Ensure n is positive, but keep track of whether the input was originally negative
+        const sign = (n < ZERO ? NEG_ONE : ONE); // Just considering zero to have a positive sign, for simplicity's sake
+        if (sign === NEG_ONE) {
+          n = -n;
+        }
+
         // Handle some small special cases
         if (n < TWO) { // n = 0 or 1
-          resolve(new PrimalityResult({ n, probablePrime: false, witness: null, divisor: null }));
+          resolve(new PrimalityResult({ n: sign * n, probablePrime: false, witness: null, divisor: null }));
           return;
         } else if (n < FOUR) { // n = 2 or 3
-          resolve(new PrimalityResult({ n, probablePrime: true, witness: null, divisor: null }));
+          resolve(new PrimalityResult({ n: sign * n, probablePrime: true, witness: null, divisor: null }));
           return;
         } else if (!(n & ONE)) { // Quick short-circuit for other even n
-          resolve(new PrimalityResult({ n, probablePrime: false, witness: null, divisor: TWO }));
+          resolve(new PrimalityResult({ n: sign * n, probablePrime: false, witness: null, divisor: TWO }));
           return;
         }
 
@@ -439,6 +447,8 @@
             x = y;
           }
 
+          // No value of i satisfied base^(d*2^i) = +/-1 (mod n)
+          // So this base is a witness to the guaranteed compositeness of n
           if (i === r) {
             probablePrime = false;
             witness = base;
@@ -450,7 +460,7 @@
           }
         }
 
-        resolve(new PrimalityResult({ n, probablePrime, witness, divisor }));
+        resolve(new PrimalityResult({ n: sign * n, probablePrime, witness, divisor }));
 
       } catch (err) {
         reject(err);
