@@ -2,7 +2,7 @@ const chai = require("chai");
 const chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised).should();
 
-const { primalityTest } = require("../index.js");
+const { primalityTest } = require("../dist/index.js");
 
 describe("small cases", () => {
   it("should not label 0 or 1 as probable primes", async () => {
