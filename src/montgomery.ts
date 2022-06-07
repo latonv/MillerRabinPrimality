@@ -1,4 +1,7 @@
-import { invertPowerOfTwo, bitLength } from "./util";
+import {
+  invertPowerOfTwo,
+  bitLength
+} from "./util";
 
 // Some useful BigInt constants
 const ZERO = 0n;
@@ -146,4 +149,12 @@ function montgomeryPow(n: bigint, exp: bigint, ctx: MontgomeryReductionContext):
   return result;
 }
 
-export { getReductionContext, montgomeryReduce, invMontgomeryReduce, montgomerySqr, montgomeryMul, montgomeryPow };
+export {
+  getReductionContext,
+  montgomeryReduce,
+  invMontgomeryReduce,
+  montgomerySqr,
+  montgomeryMul,
+  montgomeryPow,
+  MontgomeryReductionContext
+};

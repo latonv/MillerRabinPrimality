@@ -71,4 +71,9 @@ function getRandomBitString(numBits: number): string {
   return bits.substring(0, numBits);
 }
 
-export { invertPowerOfTwo, twoMultiplicity, bitLength, getRandomBitString };
+export {
+  invertPowerOfTwo,
+  twoMultiplicity,
+  bitLength,
+  getRandomBitString
+};
