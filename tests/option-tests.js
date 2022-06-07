@@ -42,6 +42,20 @@ describe("input options", () => {
       .should.eventually.be.an("object").and.have.property("probablePrime", true);
   });
 
+  it("should throw a TypeError when bases option is not an array", async () => {
+    await primalityTest(113n, { bases: 2 }).should.be.rejectedWith(TypeError);
+  });
+
+  it("should throw a RangeError when one or more provided bases is out of range", async () => {
+    await primalityTest(113n, { bases: [1, 2, 3] }).should.be.rejectedWith(RangeError);
+    await primalityTest(119n, { bases: [500] }).should.be.rejectedWith(RangeError);
+  });
+
+  it("should correctly label strong pseudoprimes to a given base", async () => {
+    await primalityTest(31697n, { bases: [3] })
+      .should.eventually.be.an("object").and.have.property("probablePrime", false); 
+  });
+
   it("should not return a divisor if findDivisor=false", async () => {
     const composites = [
       "95",
