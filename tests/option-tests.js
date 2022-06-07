@@ -52,6 +52,7 @@ describe("input options", () => {
   });
 
   it("should correctly label strong pseudoprimes to a given base", async () => {
+    // Note: 31697 is a strong pseudoprime to base 3, but should still be correctly labeled as composite
     await primalityTest(31697n, { bases: [3] })
       .should.eventually.be.an("object").and.have.property("probablePrime", false); 
   });

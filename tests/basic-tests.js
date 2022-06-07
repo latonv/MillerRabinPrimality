@@ -94,8 +94,7 @@ describe("check for valid divisors", () => {
     for (const p of primes) {
       const result = await primalityTest(p ** 2n, { findDivisor: true }); // Future-proofing by specifying the default option
       result.should.be.an("object");
-      result.should.have.property("probablePrime", false);
-      result.should.have.property("divisor", p);
+      result.should.include({ probablePrime: false, divisor: p });
     }
   });
 
