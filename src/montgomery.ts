@@ -96,7 +96,7 @@ function invMontgomeryReduce(n: bigint, ctx: MontgomeryReductionContext): bigint
  * @returns {bigint} The Montgomery-reduced square of `n`
  */
 function montgomerySqr(n: bigint, ctx: MontgomeryReductionContext): bigint {
-  return montgomeryMul(n, n, ctx) % ctx.base;
+  return montgomeryMul(n, n, ctx);
 }
 
 
