@@ -2,7 +2,7 @@
   "name": "primality-test",
   "version": "4.2.0",
   "description": "An implementation of the Miller-Rabin primality test to efficiently determine with high probability whether some arbitrarily-large number is prime.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "nyc mocha --reporter spec tests/*",
     "build": "webpack"
