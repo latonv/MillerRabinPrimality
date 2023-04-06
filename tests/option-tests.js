@@ -7,22 +7,22 @@ const { primalityTest } = require("../dist/index.js");
 describe("input options", () => {
   it("should correctly label primes with user-specified numRounds", async () => {
     const primes = [
-      "89",
-      "4145835283301077"
+      89n,
+      4145835283301077n
     ];
-    for (const p of primes) {
-      await primalityTest(p, { numRounds: 8 }).should.eventually.be.an("object").and.have.property("probablePrime", true);
-    }
+    await Promise.all(primes.map(p =>
+      primalityTest(p, { numRounds: 8 }).should.eventually.be.an("object").and.have.property("probablePrime", true)
+    ));
   });
 
   it("should correctly label composite numbers with user-specified numRounds", async () => {
     const composites = [
-      "91",
-      "41458352833010723"
+      91n,
+      41458352833010723n
     ];
-    for (const n of composites) {
-      await primalityTest(n, { numRounds: 8 }).should.eventually.be.an("object").and.have.property("probablePrime", false);
-    }
+    await Promise.all(composites.map(n =>
+      primalityTest(n, { numRounds: 8 }).should.eventually.be.an("object").and.have.property("probablePrime", false)
+    ));
   });
 
   it("should correctly use a provided array of bases instead of random bases", async () => {
@@ -47,8 +47,10 @@ describe("input options", () => {
   });
 
   it("should throw a RangeError when one or more provided bases is out of range", async () => {
-    await primalityTest(113n, { bases: [1, 2, 3] }).should.be.rejectedWith(RangeError);
-    await primalityTest(119n, { bases: [500] }).should.be.rejectedWith(RangeError);
+    await Promise.all([
+      primalityTest(113n, { bases: [1, 2, 3] }).should.be.rejectedWith(RangeError),
+      primalityTest(119n, { bases: [500] }).should.be.rejectedWith(RangeError)
+    ]);
   });
 
   it("should correctly label strong pseudoprimes to a given base", async () => {
@@ -59,11 +61,11 @@ describe("input options", () => {
 
   it("should not return a divisor if findDivisor=false", async () => {
     const composites = [
-      "95",
-      "41458352833010691"
+      95n,
+      41458352833010691n
     ];
-    for (const n of composites) {
-      await primalityTest(n, { findDivisor: false }).should.eventually.be.an("object").and.have.property("divisor", null);
-    }
+    await Promise.all(composites.map(n =>
+      primalityTest(n, { findDivisor: false }).should.eventually.be.an("object").and.have.property("divisor", null)
+    ));
   });
 });
