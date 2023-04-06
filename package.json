@@ -1,6 +1,6 @@
 {
   "name": "primality-test",
-  "version": "4.4.0",
+  "version": "4.4.1",
   "description": "An implementation of the Miller-Rabin primality test to efficiently determine with high probability whether some arbitrarily-large number is prime.",
   "main": "dist/index.js",
   "scripts": {
