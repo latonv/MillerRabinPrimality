@@ -18,8 +18,13 @@ Primitive BigInt values are used for arbitrary-size inputs and outputs. Accordin
 
 ## Usage
 
+The `primalityTest` function accepts any number, and returns a Promise resolving to a primality result object.
+The `probablePrime` property of this object indicates the result of the test on the input `n`.
+If `probablePrime` is `false`, then `n` is guaranteed to be composite, and the primality result object will specify a Miller-Rabin `witness` to the compositeness of `n`.
+In some cases, a `divisor` of composite `n` will be found, in which case it will also be provided on the result object.
+
 ```js
-const { primalityTest } = require("primality-test");
+const { primalityTest } = require('primality-test');
 
 primalityTest(91).then((result) => {
   // result should resemble:
@@ -45,9 +50,9 @@ primalityTest(3847201213).then((result) => {
 The input can be provided as a primitive number (like above), a primitive BigInt, or a string:
 ```js
 // All of these are equivalent
-primalityTest("2718281828459045235360287471").then(/* ... */);
+primalityTest('2718281828459045235360287471').then(/* ... */);
 primalityTest(2718281828459045235360287471n).then(/* ... */);
-primalityTest(BigInt("2718281828459045235360287471")).then(/* ... */);
+primalityTest(BigInt('2718281828459045235360287471')).then(/* ... */);
 ```
 
 ### Options
