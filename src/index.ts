@@ -30,34 +30,34 @@ type BigIntResolvable = number | string | bigint;
 /**
  * The available options to the primalityTest function.
  */
-type PrimalityTestOptions = {
+export interface PrimalityTestOptions {
   /**
    * A positive integer specifying the number of random bases to test against.
    * If none is provided, a reasonable number of rounds will be chosen automatically to balance speed and accuracy.
    */
- numRounds?: number,
+  numRounds?: number,
  
- /**
-  * An array of integers (or string representations thereof) to use as the
-  * bases for Miller-Rabin testing. If this option is specified, the `numRounds` option will be ignored, 
-  * and the maximum number of testing rounds will equal `bases.length` (one round for each given base).
-  * 
-  * Every base provided must lie within the range [2, n-2] (inclusive) or a RangeError will be thrown.
-  * If `bases` is specified but is not an array, a TypeError will be thrown.
-  */
- bases?: BigIntResolvable[],
+  /**
+   * An array of integers (or string representations thereof) to use as the
+   * bases for Miller-Rabin testing. If this option is specified, the `numRounds` option will be ignored, 
+   * and the maximum number of testing rounds will equal `bases.length` (one round for each given base).
+   * 
+   * Every base provided must lie within the range [2, n-2] (inclusive) or a RangeError will be thrown.
+   * If `bases` is specified but is not an array, a TypeError will be thrown.
+   */
+  bases?: BigIntResolvable[],
 
- /**
-  * Whether to calculate and return a divisor of `n` in certain cases where this is possible (not guaranteed).
-  * Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
-  */
- findDivisor?: boolean
+  /**
+   * Whether to calculate and return a divisor of `n` in certain cases where this is possible (not guaranteed).
+   * Set this to false to avoid extra calculations if a divisor is not needed. Defaults to `true`.
+   */
+  findDivisor?: boolean
 }
 
 /**
  * Options passed to the internal PrimalityResult constructor.
  */
-type PrimalityResultOptions = {
+interface PrimalityResultOptions {
   /**
    * The primality-tested number to which the result applies
    */
@@ -227,7 +227,7 @@ function validateBases(bases: BigIntResolvable[] | null, nSub: bigint): bigint[]
  *   - `witness` (a BigInt witness for the compositeness of `n`, or null if none was found),
  *   - `divisor` (a BigInt divisor of `n`, or null if no such divisor was found)
  */
-function primalityTest(n: BigIntResolvable, { numRounds=undefined, bases=undefined, findDivisor=true }: PrimalityTestOptions = {}): Promise<PrimalityResult> {
+export function primalityTest(n: BigIntResolvable, { numRounds=undefined, bases=undefined, findDivisor=true }: PrimalityTestOptions = {}): Promise<PrimalityResult> {
   return new Promise((resolve, reject) => {
     try {
       if (typeof n !== "bigint") {
@@ -350,5 +350,3 @@ function primalityTest(n: BigIntResolvable, { numRounds=undefined, bases=undefin
     }
   });
 }
-
-export { primalityTest };

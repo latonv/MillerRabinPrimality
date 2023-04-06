@@ -12,7 +12,7 @@ const ONE  = 1n;
  * A type containing precalculated values needed to efficiently reduce numbers to/from their Montgomery forms
  * and perform Montgomery-reduced arithmetic, modulo a given `base`.
  */
-type MontgomeryReductionContext = {
+export interface MontgomeryReductionContext {
   /**
    * The modulus of the reduction context
    */
@@ -47,7 +47,7 @@ type MontgomeryReductionContext = {
  * @param {bigint} base The modulus of the reduction context. Must be an odd number.
  * @returns {MontgomeryReductionContext}
  */
-function getReductionContext(base: bigint): MontgomeryReductionContext {
+export function getReductionContext(base: bigint): MontgomeryReductionContext {
   if (!(base & ONE)) throw new Error(`base must be odd`);
 
   // Select the auxiliary modulus r to be the smallest power of two greater than the base modulus
@@ -71,7 +71,7 @@ function getReductionContext(base: bigint): MontgomeryReductionContext {
  * @param {MontgomeryReductionContext} ctx The Montgomery reduction context to reduce into
  * @returns {bigint} The Montgomery form of `n`
  */
-function montgomeryReduce(n: bigint, ctx: MontgomeryReductionContext): bigint {
+export function montgomeryReduce(n: bigint, ctx: MontgomeryReductionContext): bigint {
   return (n << ctx.shift) % ctx.base;
 }
 
@@ -83,7 +83,7 @@ function montgomeryReduce(n: bigint, ctx: MontgomeryReductionContext): bigint {
  * @param {MontgomeryReductionContext} ctx The Montgomery reduction context to reduce out of
  * @returns {bigint} The (no longer Montgomery-reduced) number whose Montgomery form was `n`
  */
-function invMontgomeryReduce(n: bigint, ctx: MontgomeryReductionContext): bigint {
+export function invMontgomeryReduce(n: bigint, ctx: MontgomeryReductionContext): bigint {
   return (n * ctx.rInv) % ctx.base;
 }
 
@@ -95,7 +95,7 @@ function invMontgomeryReduce(n: bigint, ctx: MontgomeryReductionContext): bigint
  * @param {MontgomeryReductionContext} ctx The Montgomery reduction context to square within
  * @returns {bigint} The Montgomery-reduced square of `n`
  */
-function montgomerySqr(n: bigint, ctx: MontgomeryReductionContext): bigint {
+export function montgomerySqr(n: bigint, ctx: MontgomeryReductionContext): bigint {
   return montgomeryMul(n, n, ctx);
 }
 
@@ -108,7 +108,7 @@ function montgomerySqr(n: bigint, ctx: MontgomeryReductionContext): bigint {
  * @param {MontgomeryReductionContext} ctx The Montgomery reduction context to multiply within
  * @returns {bigint} The Montgomery-reduced product of `a` and `b`
  */
-function montgomeryMul(a: bigint, b: bigint, ctx: MontgomeryReductionContext): bigint {
+export function montgomeryMul(a: bigint, b: bigint, ctx: MontgomeryReductionContext): bigint {
   if (a === ZERO || b === ZERO) return ZERO;
 
   const rm1 = ctx.r - ONE;
@@ -136,7 +136,7 @@ function montgomeryMul(a: bigint, b: bigint, ctx: MontgomeryReductionContext): b
  * @param {MontgomeryReductionContext} ctx The Montgomery reduction context to exponentiate within
  * @returns {bigint} The Montgomery-reduced result of taking `n` to exponent `exp`
  */
-function montgomeryPow(n: bigint, exp: bigint, ctx: MontgomeryReductionContext): bigint {
+export function montgomeryPow(n: bigint, exp: bigint, ctx: MontgomeryReductionContext): bigint {
   // Exponentiation by squaring
   const expLen = BigInt(bitLength(exp));
   let result = montgomeryReduce(ONE, ctx);
@@ -148,13 +148,3 @@ function montgomeryPow(n: bigint, exp: bigint, ctx: MontgomeryReductionContext):
 
   return result;
 }
-
-export {
-  getReductionContext,
-  montgomeryReduce,
-  invMontgomeryReduce,
-  montgomerySqr,
-  montgomeryMul,
-  montgomeryPow,
-  MontgomeryReductionContext
-};
